@@ -1,0 +1,23 @@
+{
+  "name": "money-maker-ai-trading-bot",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace @money-maker/api\" \"npm run dev --workspace @money-maker/web\" \"npm run dev --workspace @money-maker/workers\"",
+    "build": "npm run build --workspace @money-maker/shared && npm run build --workspace @money-maker/api && npm run build --workspace @money-maker/workers && npm run build --workspace @money-maker/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "db:generate": "npx prisma generate --schema prisma/schema.prisma",
+    "db:push": "npx prisma db push --schema prisma/schema.prisma"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1",
+    "prisma": "^5.22.0",
+    "typescript": "^5.6.2"
+  }
+}

@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  username           String    @unique
+  passwordHash       String
+  firstName          String?
+  lastName           String?
+  isAdmin            Boolean   @default(false)
+  isEmailVerified    Boolean   @default(false)
+  demoBalance        Float     @default(10000)
+  accountBalance     Float     @default(0)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  sessions           Session[]
+  connectedAccounts  ConnectedAccount[]
+  strategies         Strategy[]
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+  tradeOrders        TradeOrder[]
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  userId      String
+  tokenHash   String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ConnectedAccount {
+  id            String   @id @default(cuid())
+  userId        String
+  provider      String
+  accountName   String?
+  accessToken   String?
+  refreshToken  String?
+  isActive      Boolean @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MarketInstrument {
+  id              String   @id @default(cuid())
+  symbol          String   @unique
+  displayName     String
+  marketType      String
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  observations    MarketObservation[]
+  strategies      Strategy[]
+}
+
+model MarketObservation {
+  id               String   @id @default(cuid())
+  instrumentId     String
+  timestamp        DateTime
+  open             Float
+  high             Float
+  low              Float
+  close            Float
+  volume           Float?
+  source           String
+  instrument       MarketInstrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+}
+
+model Signal {
+  id              String   @id @default(cuid())
+  symbol          String
+  marketName      String
+  timeframe       String
+  direction       String
+  confidence      Float
+  price           Float
+  stopLoss        Float?
+  takeProfit      Float?
+  riskLevel       String
+  explanation     String
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+}
+
+model Strategy {
+  id              String   @id @default(cuid())
+  userId          String
+  title           String
+  description     String?
+  symbol          String
+  instrumentId    String?
+  config          Json
+  isDemoMode      Boolean @default(true)
+  isActive        Boolean @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instrument      MarketInstrument? @relation(fields: [instrumentId], references: [id])
+  backtests       BacktestRun[]
+}
+
+model BacktestRun {
+  id              String   @id @default(cuid())
+  strategyId      String
+  metrics         Json
+  winRate         Float
+  netProfit       Float
+  maxDrawdown     Float
+  totalTrades     Int
+  createdAt       DateTime @default(now())
+  strategy        Strategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+}
+
+model TradeOrder {
+  id              String   @id @default(cuid())
+  userId          String
+  symbol          String
+  side            String
+  stake           Float
+  contractType    String
+  status          String
+  strategyId      String?
+  isDemo          Boolean @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id              String   @id @default(cuid())
+  userId          String
+  title           String
+  content         String
+  type            String
+  read            Boolean @default(false)
+  createdAt       DateTime @default(now())
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  userId          String?
+  action          String
+  details         String
+  createdAt       DateTime @default(now())
+  user            User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
